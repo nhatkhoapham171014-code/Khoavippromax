@@ -1,88 +1,78 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Vòng Quay May Mắn</title>
 <style>
-  body { font-family: Arial; text-align: center; padding-top: 50px; background: #f8f8f8; transition: background 0.5s; }
-  #wheel { width: 300px; height: 300px; border-radius: 50%; border: 10px solid #333; margin: 0 auto; position: relative; transition: transform 4s cubic-bezier(0.33, 1, 0.68, 1);}
-  .segment { width: 50%; height: 50%; position: absolute; top: 50%; left: 50%; transform-origin: 0% 0%; clip-path: polygon(0 0, 100% 0, 0 100%);}
-  #pointer { width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-bottom: 30px solid red; margin: 20px auto; transition: border-color 0.2s; }
-  #spin { margin-top: 20px; padding: 10px 20px; font-size: 18px; }
-  #codeInput { padding: 10px; font-size: 16px; width: 200px; margin-bottom: 10px; }
-  #message { font-weight: bold; margin-top: 10px; }
-  #spinCounter { margin-top: 10px; font-size: 18px; font-weight: bold; }
+  :root { --bg:#f8f8f8; --ring:#333; --accent:#ff4757; }
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;text-align:center;background:var(--bg);margin:0;padding:36px 12px;transition:background .5s}
+  h1{margin:0 0 12px}
+  .wrap{max-width:520px;margin:0 auto}
+  .bar{display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+  input{padding:10px 12px;font-size:16px;border:1px solid #ddd;border-radius:10px;outline:none;min-width:220px}
+  button{padding:10px 16px;font-size:16px;border:0;border-radius:12px;background:#111;color:#fff;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.08)}
+  button[disabled]{opacity:.45;cursor:not-allowed}
+  #message{font-weight:700;margin:8px 0 4px}
+  #spinCounter{font-size:18px;font-weight:700;margin:4px 0 16px}
 
-  @keyframes blinkWheel {
-    0% { box-shadow: 0 0 10px yellow; }
-    50% { box-shadow: 0 0 30px red; }
-    100% { box-shadow: 0 0 10px yellow; }
-  }
+  #stage{position:relative;width:320px;margin:0 auto}
+  #pointer{width:0;height:0;border-left:15px solid transparent;border-right:15px solid transparent;border-bottom:30px solid var(--accent);margin:0 auto 16px;transition:border-color .2s}
+  #wheel{width:320px;height:320px;border-radius:50%;border:12px solid var(--ring);margin:0 auto;position:relative;transition:transform 4s cubic-bezier(.33,1,.68,1);background:#fff;overflow:hidden}
+  .segment{width:50%;height:50%;position:absolute;top:50%;left:50%;transform-origin:0% 0%;clip-path:polygon(0 0,100% 0,0 100%)}
+  #result{margin:14px 0 0;font-size:18px;font-weight:700}
 
-  @keyframes blinkBody {
-    0% { background: yellow; }
-    25% { background: red; }
-    50% { background: orange; }
-    75% { background: #00ffcc; }
-    100% { background: yellow; }
-  }
-
-  @keyframes shake {
-    0% { transform: rotate(0deg); }
-    10% { transform: rotate(2deg); }
-    20% { transform: rotate(-2deg); }
-    30% { transform: rotate(2deg); }
-    40% { transform: rotate(-2deg); }
-    50% { transform: rotate(1deg); }
-    60% { transform: rotate(-1deg); }
-    70% { transform: rotate(1deg); }
-    80% { transform: rotate(-1deg); }
-    90% { transform: rotate(0deg); }
-    100% { transform: rotate(0deg); }
-  }
-
-  @keyframes pointerBlink {
-    0% { border-bottom-color: red; }
-    50% { border-bottom-color: yellow; }
-    100% { border-bottom-color: red; }
-  }
+  /* Hiệu ứng */
+  @keyframes blinkWheel{0%{box-shadow:0 0 10px #ff0}50%{box-shadow:0 0 30px #f00}100%{box-shadow:0 0 10px #ff0}}
+  @keyframes blinkBody{0%{background:yellow}25%{background:red}50%{background:orange}75%{background:#00ffcc}100%{background:yellow}}
+  @keyframes shake{0%{transform:rotate(0)}10%{transform:rotate(2deg)}20%{transform:rotate(-2deg)}30%{transform:rotate(2deg)}40%{transform:rotate(-2deg)}50%{transform:rotate(1deg)}60%{transform:rotate(-1deg)}70%{transform:rotate(1deg)}80%{transform:rotate(-1deg)}90%{transform:rotate(0)}100%{transform:rotate(0)}}
+  @keyframes pointerBlink{0%{border-bottom-color:#f33}50%{border-bottom-color:#ff0}100%{border-bottom-color:#f33}}
 </style>
 </head>
 <body>
+  <div class="wrap">
+    <h1>Vòng Quay May Mắn</h1>
 
-<h1>Vòng Quay May Mắn</h1>
-<input type="text" id="codeInput" placeholder="Nhập code của bạn">
-<button id="checkCode">Xác nhận Code</button>
+    <div class="bar">
+      <input id="codeInput" placeholder="Nhập code của bạn" />
+      <button id="checkCode">Xác nhận code</button>
+    </div>
+    <div id="message"></div>
+    <div id="spinCounter">Lượt quay còn lại: 0</div>
 
-<div id="message"></div>
-<div id="spinCounter">Lượt quay còn lại: 0</div>
+    <div id="stage">
+      <div id="pointer"></div>
+      <div id="wheel" aria-label="Vòng quay">
+        <!-- 8 miếng màu để nhìn đẹp -->
+        <div class="segment" style="transform:rotate(0deg);   background:#f44336"></div>
+        <div class="segment" style="transform:rotate(45deg);  background:#ff9800"></div>
+        <div class="segment" style="transform:rotate(90deg);  background:#ffeb3b"></div>
+        <div class="segment" style="transform:rotate(135deg); background:#4caf50"></div>
+        <div class="segment" style="transform:rotate(180deg); background:#2196f3"></div>
+        <div class="segment" style="transform:rotate(225deg); background:#9c27b0"></div>
+        <div class="segment" style="transform:rotate(270deg); background:#00bcd4"></div>
+        <div class="segment" style="transform:rotate(315deg); background:#e91e63"></div>
+      </div>
+    </div>
 
-<div id="pointer"></div>
-<div id="wheel">
-  <div class="segment" style="transform: rotate(0deg); background:#f44336;"></div>
-  <div class="segment" style="transform: rotate(45deg); background:#ff9800;"></div>
-  <div class="segment" style="transform: rotate(90deg); background:#ffeb3b;"></div>
-  <div class="segment" style="transform: rotate(135deg); background:#4caf50;"></div>
-  <div class="segment" style="transform: rotate(180deg); background:#2196f3;"></div>
-  <div class="segment" style="transform: rotate(225deg); background:#9c27b0;"></div>
-  <div class="segment" style="transform: rotate(270deg); background:#00bcd4;"></div>
-  <div class="segment" style="transform: rotate(315deg); background:#e91e63;"></div>
-</div>
+    <div style="margin-top:14px">
+      <button id="spin" disabled>Quay Ngay!</button>
+    </div>
+    <p id="result"></p>
+  </div>
 
-<button id="spin" disabled>Quay Ngay!</button>
-<p id="result"></p>
-
-<audio id="winSound">
-  <source src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" type="audio/mpeg">
-</audio>
-<audio id="luckSound">
-  <source src="https://www.soundjay.com/button/sounds/button-16.mp3" type="audio/mpeg">
-</audio>
+  <!-- Âm thanh -->
+  <audio id="winSound">
+    <source src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="luckSound">
+    <source src="https://www.soundjay.com/button/sounds/button-16.mp3" type="audio/mpeg">
+  </audio>
 
 <script>
   const wheel = document.getElementById('wheel');
-  const result = document.getElementById('result');
+  const pointer = document.getElementById('pointer');
+  const result  = document.getElementById('result');
   const spinBtn = document.getElementById('spin');
   const codeInput = document.getElementById('codeInput');
   const checkCodeBtn = document.getElementById('checkCode');
@@ -90,10 +80,10 @@
   const spinCounter = document.getElementById('spinCounter');
   const winSound = document.getElementById('winSound');
   const luckSound = document.getElementById('luckSound');
-  const pointer = document.getElementById('pointer');
   const body = document.body;
 
-  let codes = [
+  /* Danh sách CODE hợp lệ (100 code bạn đã đưa) */
+  const codes = [
     "KhoaX7","Khoa88","KhoaVIP1","Khoa99","KhoPro5",
     "PhamKhoa2","NKhoa88","KhoVIPX","Khoa123","KhoaAZ9",
     "KhoCool1","Khoa777","KhoKing","Khoa88X","KhoaVIP9",
@@ -115,61 +105,85 @@
     "Kho77Pro","Khoa999","KhoVIP33","KhoaLucky99","PhamK4"
   ];
 
-  let usedCodes = [];
+  const usedCodes = new Set(); // đã dùng
   let spinsAvailable = 0;
 
+  // Tỉ lệ trúng thưởng
   const rewards = [
     { name: "Chúc bạn may mắn lần sau", chance: 0.98 },
     { name: "1 lần check đồ", chance: 0.01 },
     { name: "1 ly nước", chance: 0.01 }
   ];
 
-  function getReward() {
-    let rand = Math.random();
-    let cumulative = 0;
-    for (let i = 0; i < rewards.length; i++) {
-      cumulative += rewards[i].chance;
-      if (rand < cumulative) return rewards[i].name;
+  function getReward(){
+    const r = Math.random();
+    let acc = 0;
+    for (const item of rewards){
+      acc += item.chance;
+      if (r < acc) return item.name;
     }
     return rewards[0].name;
   }
 
-  function updateSpinCounter() {
+  function updateSpinCounter(){
     spinCounter.textContent = "Lượt quay còn lại: " + spinsAvailable;
   }
 
   checkCodeBtn.addEventListener('click', () => {
     const code = codeInput.value.trim();
-    if(!code) { message.textContent = "Vui lòng nhập code!"; return; }
-    if(usedCodes.includes(code) || !codes.includes(code)) { 
-      message.textContent = "Mã sai hoặc đã được nhập"; 
-      return; 
+    if (!code){ message.textContent = "Vui lòng nhập code!"; return; }
+    if (usedCodes.has(code) || !codes.includes(code)){
+      message.textContent = "Mã sai hoặc đã được nhập";
+      return;
     }
-    usedCodes.push(code);
+    usedCodes.add(code);
     spinsAvailable++;
     message.textContent = "Mã đúng! Bạn có " + spinsAvailable + " lượt quay.";
     spinBtn.disabled = false;
-    codeInput.value = '';
+    codeInput.value = "";
     updateSpinCounter();
   });
 
   spinBtn.addEventListener('click', () => {
-    if(spinsAvailable <= 0) return;
+    if (spinsAvailable <= 0) return;
+
     spinsAvailable--;
     updateSpinCounter();
 
-    // Rung nhẹ vòng quay
+    // Hiệu ứng khi bắt đầu quay: rung + nháy kim
     wheel.style.animation = "shake 4s";
+    pointer.style.animation = "pointerBlink .2s infinite";
 
-    // Nhấp nháy kim chỉ
-    pointer.style.animation = "pointerBlink 0.2s infinite";
-
-    let randomDeg = Math.floor(Math.random() * 360) + 720;
-    wheel.style.transform = `rotate(${randomDeg}deg)`;
+    // Xoay ngẫu nhiên (ít nhất 2 vòng)
+    const deg = Math.floor(Math.random() * 360) + 720;
+    wheel.style.transform = `rotate(${deg}deg)`;
 
     setTimeout(() => {
-      let reward = getReward();
+      const reward = getReward();
       result.textContent = "Bạn nhận được: " + reward;
 
-      // Dừng nhấp nháy kim
-     
+      // Tắt rung & nháy kim
+      wheel.style.animation = "";
+      pointer.style.animation = "";
+
+      if (reward === "Chúc bạn may mắn lần sau"){
+        body.style.animation = "";
+        luckSound.currentTime = 0;
+        luckSound.play();
+      } else {
+        // Trúng thưởng hiếm → nhấp nháy toàn trang + nháy vòng quay
+        body.style.animation = "blinkBody 2s linear";
+        wheel.style.animation = "blinkWheel .5s alternate 4";
+        winSound.currentTime = 0;
+        winSound.play();
+        setTimeout(() => { body.style.animation = ""; wheel.style.animation = ""; }, 2000);
+      }
+
+      // Hết lượt thì khóa nút
+      if (spinsAvailable <= 0) spinBtn.disabled = true;
+      message.textContent = spinsAvailable > 0 ? ("Bạn còn " + spinsAvailable + " lượt quay.") : "Hãy nhập code để tiếp tục!";
+    }, 4000); // chờ kết thúc xoay
+  });
+</script>
+</body>
+</html>
