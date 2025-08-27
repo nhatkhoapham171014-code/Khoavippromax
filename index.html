@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vòng Quay May Mắn</title>
+<style>
+  body { font-family: Arial; text-align: center; padding-top: 50px; background: #f8f8f8; transition: background 0.5s; }
+  #wheel { width: 300px; height: 300px; border-radius: 50%; border: 10px solid #333; margin: 0 auto; position: relative; transition: transform 4s cubic-bezier(0.33, 1, 0.68, 1);}
+  .segment { width: 50%; height: 50%; position: absolute; top: 50%; left: 50%; transform-origin: 0% 0%; clip-path: polygon(0 0, 100% 0, 0 100%);}
+  #pointer { width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-bottom: 30px solid red; margin: 20px auto; transition: border-color 0.2s; }
+  #spin { margin-top: 20px; padding: 10px 20px; font-size: 18px; }
+  #codeInput { padding: 10px; font-size: 16px; width: 200px; margin-bottom: 10px; }
+  #message { font-weight: bold; margin-top: 10px; }
+  #spinCounter { margin-top: 10px; font-size: 18px; font-weight: bold; }
+
+  @keyframes blinkWheel {
+    0% { box-shadow: 0 0 10px yellow; }
+    50% { box-shadow: 0 0 30px red; }
+    100% { box-shadow: 0 0 10px yellow; }
+  }
+
+  @keyframes blinkBody {
+    0% { background: yellow; }
+    25% { background: red; }
+    50% { background: orange; }
+    75% { background: #00ffcc; }
+    100% { background: yellow; }
+  }
+
+  @keyframes shake {
+    0% { transform: rotate(0deg); }
+    10% { transform: rotate(2deg); }
+    20% { transform: rotate(-2deg); }
+    30% { transform: rotate(2deg); }
+    40% { transform: rotate(-2deg); }
+    50% { transform: rotate(1deg); }
+    60% { transform: rotate(-1deg); }
+    70% { transform: rotate(1deg); }
+    80% { transform: rotate(-1deg); }
+    90% { transform: rotate(0deg); }
+    100% { transform: rotate(0deg); }
+  }
+
+  @keyframes pointerBlink {
+    0% { border-bottom-color: red; }
+    50% { border-bottom-color: yellow; }
+    100% { border-bottom-color: red; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Vòng Quay May Mắn</h1>
+<input type="text" id="codeInput" placeholder="Nhập code của bạn">
+<button id="checkCode">Xác nhận Code</button>
+
+<div id="message"></div>
+<div id="spinCounter">Lượt quay còn lại: 0</div>
+
+<div id="pointer"></div>
+<div id="wheel">
+  <div class="segment" style="transform: rotate(0deg); background:#f44336;"></div>
+  <div class="segment" style="transform: rotate(45deg); background:#ff9800;"></div>
+  <div class="segment" style="transform: rotate(90deg); background:#ffeb3b;"></div>
+  <div class="segment" style="transform: rotate(135deg); background:#4caf50;"></div>
+  <div class="segment" style="transform: rotate(180deg); background:#2196f3;"></div>
+  <div class="segment" style="transform: rotate(225deg); background:#9c27b0;"></div>
+  <div class="segment" style="transform: rotate(270deg); background:#00bcd4;"></div>
+  <div class="segment" style="transform: rotate(315deg); background:#e91e63;"></div>
+</div>
+
+<button id="spin" disabled>Quay Ngay!</button>
+<p id="result"></p>
+
+<audio id="winSound">
+  <source src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" type="audio/mpeg">
+</audio>
+<audio id="luckSound">
+  <source src="https://www.soundjay.com/button/sounds/button-16.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+  const wheel = document.getElementById('wheel');
+  const result = document.getElementById('result');
+  const spinBtn = document.getElementById('spin');
+  const codeInput = document.getElementById('codeInput');
+  const checkCodeBtn = document.getElementById('checkCode');
+  const message = document.getElementById('message');
+  const spinCounter = document.getElementById('spinCounter');
+  const winSound = document.getElementById('winSound');
+  const luckSound = document.getElementById('luckSound');
+  const pointer = document.getElementById('pointer');
+  const body = document.body;
+
+  let codes = [
+    "KhoaX7","Khoa88","KhoaVIP1","Khoa99","KhoPro5",
+    "PhamKhoa2","NKhoa88","KhoVIPX","Khoa123","KhoaAZ9",
+    "KhoCool1","Khoa777","KhoKing","Khoa88X","KhoaVIP9",
+    "KhoHero","NKhoa99","KhoSuper7","KhoaX9","PhamK3",
+    "KhoGenZ","KhoaProX","KhoBest","Khoa66","KhoWin8",
+    "KhoaLucky","PhamK9","KhoVIP77","Khoa88Pro","KhoStar",
+    "KhoaX5","KhoaGame1","Kho999","KhoaVIPX","KhoSky",
+    "PhamKho1","KhoaX10","KhoOne","KhoaMagic","KhoSuperX",
+    "Khoa111","KhoK9","Pham88","KhoVIP2","KhoaBest1",
+    "KhoKingX","Khoa88A","PhamK8","Kho77X","KhoaHero9",
+    "KhoVIP5","KhoaX8","KhoPro7","PhamK6","KhoaStarX",
+    "Kho123","KhoaVIP77","KhoaAZ7","KhoX66","Khoa777X",
+    "PhamK1","KhoVIP88","KhoaPro7","KhoaLucky8","KhoSkyX",
+    "KhoaX88","KhoGame9","Pham99","KhoVIP66","KhoaMagicX",
+    "KhoCool9","Khoa88King","PhamK7","KhoStar8","KhoaSuper7",
+    "KhoX99","KhoaVIP11","KhoHero7","PhamX88","KhoaX66",
+    "Kho88Pro","KhoaVIP21","KhoWinX","KhoaKing9","PhamK5",
+    "KhoaPro88","KhoVIPX9","KhoaX22","KhoSuper9","PhamKhoaX",
+    "Kho77Pro","Khoa999","KhoVIP33","KhoaLucky99","PhamK4"
+  ];
+
+  let usedCodes = [];
+  let spinsAvailable = 0;
+
+  const rewards = [
+    { name: "Chúc bạn may mắn lần sau", chance: 0.98 },
+    { name: "1 lần check đồ", chance: 0.01 },
+    { name: "1 ly nước", chance: 0.01 }
+  ];
+
+  function getReward() {
+    let rand = Math.random();
+    let cumulative = 0;
+    for (let i = 0; i < rewards.length; i++) {
+      cumulative += rewards[i].chance;
+      if (rand < cumulative) return rewards[i].name;
+    }
+    return rewards[0].name;
+  }
+
+  function updateSpinCounter() {
+    spinCounter.textContent = "Lượt quay còn lại: " + spinsAvailable;
+  }
+
+  checkCodeBtn.addEventListener('click', () => {
+    const code = codeInput.value.trim();
+    if(!code) { message.textContent = "Vui lòng nhập code!"; return; }
+    if(usedCodes.includes(code) || !codes.includes(code)) { 
+      message.textContent = "Mã sai hoặc đã được nhập"; 
+      return; 
+    }
+    usedCodes.push(code);
+    spinsAvailable++;
+    message.textContent = "Mã đúng! Bạn có " + spinsAvailable + " lượt quay.";
+    spinBtn.disabled = false;
+    codeInput.value = '';
+    updateSpinCounter();
+  });
+
+  spinBtn.addEventListener('click', () => {
+    if(spinsAvailable <= 0) return;
+    spinsAvailable--;
+    updateSpinCounter();
+
+    // Rung nhẹ vòng quay
+    wheel.style.animation = "shake 4s";
+
+    // Nhấp nháy kim chỉ
+    pointer.style.animation = "pointerBlink 0.2s infinite";
+
+    let randomDeg = Math.floor(Math.random() * 360) + 720;
+    wheel.style.transform = `rotate(${randomDeg}deg)`;
+
+    setTimeout(() => {
+      let reward = getReward();
+      result.textContent = "Bạn nhận được: " + reward;
+
+      // Dừng nhấp nháy kim
+     
